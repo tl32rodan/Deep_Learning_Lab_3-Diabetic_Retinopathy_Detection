@@ -1,6 +1,10 @@
+import torch
+from torch.utils import data, 
+from torchvision import transforms
+from PIL import Image
 import pandas as pd
-from torch.utils import data
 import numpy as np
+import os
 
 
 def getData(mode):
@@ -28,14 +32,20 @@ class RetinopathyLoader(data.Dataset):
         self.img_name, self.label = getData(mode)
         self.mode = mode
         print("> Found %d images..." % (len(self.img_name)))
+        
+        # Transform:Convert the pixel value to [0, 1]
+        #           Transpose the image shape from [H, W, C] to [C, H, W]
+        # We can just use transform.ToTensor() to acheive it
+        self.trans = transforms.Compose([
+            transforms.ToTensor()
+        ])
+        
 
     def __len__(self):
         """'return the size of dataset"""
         return len(self.img_name)
 
     def __getitem__(self, index):
-        """something you should implement here"""
-
         """
            step1. Get the image path from 'self.img_name' and load it.
                   hint : path = root + self.img_name[index] + '.jpeg'
@@ -53,5 +63,9 @@ class RetinopathyLoader(data.Dataset):
                          
             step4. Return processed image and label
         """
+        img   = Image.open(os.path.join(self.root,self.img_name[index]+'.jpeg'))
+        if self.trans is not None:
+            img   = self.trans(img)
+        label = self.label[index]
 
         return img, label
