@@ -1,5 +1,5 @@
 import torch
-from torch.utils import data, 
+from torch.utils import data
 from torchvision import transforms
 from PIL import Image
 import pandas as pd
