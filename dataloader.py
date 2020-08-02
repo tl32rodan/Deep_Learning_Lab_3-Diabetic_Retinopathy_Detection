@@ -18,6 +18,10 @@ def getData(mode):
         return np.squeeze(img.values), np.squeeze(label.values)
 
 
+img,label = getData('train')
+np.unique(label)
+
+
 class RetinopathyLoader(data.Dataset):
     def __init__(self, root, mode):
         """
