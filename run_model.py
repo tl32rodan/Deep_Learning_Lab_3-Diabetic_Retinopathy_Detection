@@ -44,6 +44,8 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
             running_loss = 0.0
             running_corrects = 0
         
+            batch_count = 0
+            
             # Iterate over data
             for x, y in dataloaders[phase]:
                 x = x.to(device)
@@ -68,6 +70,11 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
                 # statistics
                 running_loss += loss.item() * x.size(0)
                 running_corrects += torch.sum(preds == y.data)
+                
+                batch_count = batch_count + 1
+                
+                if batch_count %10 == 0:
+                    print('batch_count = ',batch_count)
                 
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
             epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
