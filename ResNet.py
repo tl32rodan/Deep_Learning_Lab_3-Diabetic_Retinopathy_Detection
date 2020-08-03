@@ -119,10 +119,10 @@ class ResNet(nn.Sequential):
             ('maxpool', nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         ]))
         
-        layer1  = self._make_layer(block_type, 64,  blocks_per_layer[0])
-        layer2  = self._make_layer(block_type, 128, blocks_per_layer[1])
-        layer3  = self._make_layer(block_type, 256, blocks_per_layer[2])
-        layer4  = self._make_layer(block_type, 512, blocks_per_layer[3])
+        layer1  = self._make_layer(block_type, 64,  blocks_per_layer[0], stride=1)
+        layer2  = self._make_layer(block_type, 128, blocks_per_layer[1], stride=2)
+        layer3  = self._make_layer(block_type, 256, blocks_per_layer[2], stride=2)
+        layer4  = self._make_layer(block_type, 512, blocks_per_layer[3], stride=2)
         
         final = nn.Sequential(OrderedDict([
             ('avgpool', nn.AdaptiveAvgPool2d((1, 1))),
@@ -140,10 +140,10 @@ class ResNet(nn.Sequential):
             ('fc' , fc)
         ]))
         
-    def _make_layer(self, block_type, out_features, num_blocks):
+    def _make_layer(self, block_type, out_features, num_blocks, stride=1):
         
         layers = []
-        layers.append(block_type(self.in_features, out_features))
+        layers.append(block_type(self.in_features, out_features, stride))
         
         self.in_features = out_features * block_type.expansion
         
@@ -156,20 +156,20 @@ class ResNet(nn.Sequential):
 # +
 class ResNet18(ResNet):
     def __init__(self, num_classes=5):
-        super(ResNet18,self)(BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
+        super(ResNet18,self).__init__(BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
         
 class ResNet34(ResNet):
     def __init__(self, num_classes=5):
-        super(ResNet34,self)(BasicBlock, [3, 4, 6, 3], num_classes=num_classes)
+        super(ResNet34,self).__init__(BasicBlock, [3, 4, 6, 3], num_classes=num_classes)
         
 class ResNet50(ResNet):
     def __init__(self, num_classes=5):
-        super(ResNet50,self)(BottleneckBlock, [3, 4, 6, 3], num_classes=num_classes)
+        super(ResNet50,self).__init__(BottleneckBlock, [3, 4, 6, 3], num_classes=num_classes)
                 
 class ResNet101(ResNet):
     def __init__(self, num_classes=5):
-        super(ResNet101,self)(BottleneckBlock, [3, 4, 23, 3], num_classes=num_classes)
+        super(ResNet101,self).__init__(BottleneckBlock, [3, 4, 23, 3], num_classes=num_classes)
         
 class ResNet152(ResNet):
     def __init__(self, num_classes=5):
-        super(ResNet152,self)(BottleneckBlock, [3, 8, 36, 3], num_classes=num_classes)
+        super(ResNet152,self).__init__(BottleneckBlock, [3, 8, 36, 3], num_classes=num_classes)
