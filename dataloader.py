@@ -69,7 +69,7 @@ class RetinopathyLoader(data.Dataset):
         """
         img   = Image.open(os.path.join(self.root,self.img_name[index]+'.jpeg'))
         if self.trans is not None:
-            img   = self.trans(img)
+            img = self.trans(img)
         label = self.label[index]
 
         return img, label

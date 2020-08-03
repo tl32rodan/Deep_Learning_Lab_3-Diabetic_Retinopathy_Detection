@@ -133,3 +133,4 @@ dmypy.json
 *.zip
 data/**
 models/**
+result_list/**
