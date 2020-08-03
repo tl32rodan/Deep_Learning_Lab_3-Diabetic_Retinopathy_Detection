@@ -7,25 +7,24 @@ class BasicBlock(nn.Module):
     # To sync with bottleneck block
     expansion = 1
 
-    def __init__(self, in_features, out_features, stride=1):
+    def __init__(self, in_features, out_features, stride=1, downsample=None, groups=1,
+                 base_width=64, dilation=1, norm_layer=None):
         
         super(BasicBlock,self).__init__()
         
-        self.conv1 = nn.Conv2d(in_features, out_features, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1   = nn.BatchNorm2d(out_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        self.relu1 = nn.ReLU()
-        self.conv2 = nn.Conv2d(out_features, out_features, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2   = nn.BatchNorm2d(out_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-    
-        # When in_features != out_features, downsampling is required. 
-        if in_features != out_features:
-            self.downsample = nn.Sequential(
-                nn.Conv2d(in_features, out_features, kernel_size=1 ,stride=stride),
-                nn.BatchNorm2d(out_features)
-            )
-        else:
-            self.downsample = None
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        if groups != 1 or base_width != 64:
+            raise ValueError('BasicBlock only supports groups=1 and base_width=64')
+        if dilation > 1:
+            raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
         
+        self.conv1 = nn.Conv2d(in_features, out_features, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1   = norm_layer(out_features)
+        self.relu1 = nn.ReLU()
+        
+        self.conv2 = nn.Conv2d(out_features, out_features, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2   = norm_layer(out_features)
         self.relu2 = nn.ReLU()
         
         self.identity = None
@@ -33,10 +32,8 @@ class BasicBlock(nn.Module):
         
     def forward(self,x):
         # Record identity
-        if self.downsample is not None:
-            self.identity = self.downsample(x)
-        else:
-            self.identity = x
+        self.identity = x
+            
         
         x = self.conv1(x)
         x = self.bn1(x)
@@ -44,6 +41,9 @@ class BasicBlock(nn.Module):
 
         x = self.conv2(x)
         x = self.bn2(x)
+        
+        if self.downsample is not None:
+            self.identity = self.downsample(self.identity)
         
         x += self.identity
         x = self.relu2(x)
@@ -55,40 +55,36 @@ class BottleneckBlock(nn.Module):
     # The number of features of final layer of bottleneck block is 4 times more than the first layer's of it.
     expansion = 4
     
-    def __init__(self, in_features, out_features, stride=1):     
+    def __init__(self, in_features, out_features, stride=1, downsample=None, groups=1,
+                 base_width=64, dilation=1, norm_layer=None):   
         super(BottleneckBlock,self).__init__()
+        
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        width = int(out_features * (base_width / 64.)) * groups
             
-        self.conv1 = nn.Conv2d(in_features, out_features, kernel_size=1, stride=stride, padding=1, bias=False)
-        self.bn1   = nn.BatchNorm2d(out_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        self.conv1 = nn.Conv2d(in_features, width, kernel_size=1, stride=1, bias=False)
+        self.bn1   = norm_layer(width)
         self.relu1 = nn.ReLU()
         
-        self.conv2 = nn.Conv2d(out_features, out_features, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2   = nn.BatchNorm2d(out_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        self.conv2 = nn.Conv2d(width, width, kernel_size=3, stride=stride, padding=dilation, groups=groups, bias=False, dilation=dilation)
+        self.bn2   = norm_layer(width)
         self.relu2 = nn.ReLU()
         
-        self.conv3 = nn.Conv2d(out_features, out_features*self.expansion, kernel_size=1, stride=1, padding=1, bias=False)
-        self.bn3   = nn.BatchNorm2d(out_features*self.expansion, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-    
-        # When in_features != out_features, downsampling is required.
-        if in_features != out_features*self.expansion:
-            self.downsample = nn.Sequential(
-                nn.Conv2d(in_features, out_features*self.expansion, kernel_size=1 ,stride=stride),
-                nn.BatchNorm2d(out_features)
-            )
-        else:
-            self.downsample = None
-            
+        self.conv3 = nn.Conv2d(width, out_features*self.expansion, kernel_size=1, stride=1, bias=False)
+        self.bn3   = norm_layer(out_features*self.expansion)
         self.relu3 = nn.ReLU()
         
+        
+        self.downsample = downsample
         self.identity = None
+        self.stride = stride
              
     def forward(self,x):
         # Record identity
-        if self.downsample is not None:
-            self.identity = self.downsample(x)
-        else:
-            self.identity = x
+        self.identity = x
         
+        #print('x.size() =',x.size() , ' ; self.identity.size() = ',self.identity.size())
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu1(x)
@@ -100,6 +96,10 @@ class BottleneckBlock(nn.Module):
         x = self.conv3(x)
         x = self.bn3(x)
         
+        if self.downsample is not None:
+            self.identity = self.downsample(self.identity)
+        #print('x.size() =',x.size() , ' ; self.identity.size() = ',self.identity.size())
+        
         x += self.identity
         x = self.relu3(x)
 
@@ -107,14 +107,24 @@ class BottleneckBlock(nn.Module):
 
 
 class ResNet(nn.Sequential):
-    def __init__(self, block_type=BasicBlock, blocks_per_layer=[2,2,2,2], num_classes=5):
+    def __init__(self, block_type=BasicBlock, blocks_per_layer=[2,2,2,2], num_classes=5,\
+                 zero_init_residual=False,\
+                 groups=1, width_per_group=64, replace_stride_with_dilation=None,\
+                 norm_layer=None):
         
         # Initial in_features for "layer", not for the ResNet model itself
         self.in_features = 64
+        self.dilation = 1
+        self.groups = groups
+        self.base_width = width_per_group
+        
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        self._norm_layer = norm_layer
         
         layer0 = nn.Sequential(OrderedDict([
             ('conv1'  , nn.Conv2d(3, self.in_features, kernel_size=7, stride=2, padding=3, bias=False)),
-            ('bn1'    , nn.BatchNorm2d(64)),
+            ('bn1'    , nn.BatchNorm2d(self.in_features)),
             ('relu1'   , nn.ReLU()),
             ('maxpool', nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         ]))
@@ -141,14 +151,25 @@ class ResNet(nn.Sequential):
         ]))
         
     def _make_layer(self, block_type, out_features, num_blocks, stride=1):
+        norm_layer = self._norm_layer
+        previous_dilation = self.dilation
+        
+        if stride != 1 or self.in_features != out_features * block_type.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.in_features, out_features * block_type.expansion, kernel_size=1, stride=stride, bias=False),
+                norm_layer(out_features* block_type.expansion),
+            )
         
         layers = []
-        layers.append(block_type(self.in_features, out_features, stride))
+        layers.append(block_type(self.in_features, out_features, stride, downsample, self.groups,\
+                            self.base_width, previous_dilation, norm_layer))
         
         self.in_features = out_features * block_type.expansion
         
         for _ in range(1, num_blocks):
-            layers.append(block_type(self.in_features, out_features))
+            layers.append(block_type(self.in_features, out_features, groups=self.groups,\
+                                base_width=self.base_width, dilation=self.dilation,\
+                                norm_layer=norm_layer))
             
         return nn.Sequential(*layers)
 
