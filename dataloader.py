@@ -18,10 +18,6 @@ def getData(mode):
         return np.squeeze(img.values), np.squeeze(label.values)
 
 
-img,label = getData('train')
-np.unique(label)
-
-
 class RetinopathyLoader(data.Dataset):
     def __init__(self, root, mode):
         """
@@ -41,7 +37,11 @@ class RetinopathyLoader(data.Dataset):
         #           Transpose the image shape from [H, W, C] to [C, H, W]
         # We can just use transform.ToTensor() to acheive it
         self.trans = transforms.Compose([
-            transforms.ToTensor()
+            transforms.Resize((256, 256)),
+            transforms.RandomCrop((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                               std=[0.229, 0.224, 0.225])
         ])
         
 
