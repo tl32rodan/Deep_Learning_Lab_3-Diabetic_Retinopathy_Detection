@@ -21,11 +21,11 @@ class BasicBlock(nn.Module):
         
         self.conv1 = nn.Conv2d(in_features, out_features, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1   = norm_layer(out_features)
-        self.relu1 = nn.ReLU()
+        self.relu1 = nn.ReLU(inplace=True)
         
         self.conv2 = nn.Conv2d(out_features, out_features, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2   = norm_layer(out_features)
-        self.relu2 = nn.ReLU()
+        self.relu2 = nn.ReLU(inplace=True)
         
         self.identity = None
         
@@ -65,15 +65,15 @@ class BottleneckBlock(nn.Module):
             
         self.conv1 = nn.Conv2d(in_features, width, kernel_size=1, stride=1, bias=False)
         self.bn1   = norm_layer(width)
-        self.relu1 = nn.ReLU()
+        self.relu1 = nn.ReLU(inplace=True)
         
         self.conv2 = nn.Conv2d(width, width, kernel_size=3, stride=stride, padding=dilation, groups=groups, bias=False, dilation=dilation)
         self.bn2   = norm_layer(width)
-        self.relu2 = nn.ReLU()
+        self.relu2 = nn.ReLU(inplace=True)
         
         self.conv3 = nn.Conv2d(width, out_features*self.expansion, kernel_size=1, stride=1, bias=False)
         self.bn3   = norm_layer(out_features*self.expansion)
-        self.relu3 = nn.ReLU()
+        self.relu3 = nn.ReLU(inplace=True)
         
         
         self.downsample = downsample
@@ -125,7 +125,7 @@ class ResNet(nn.Sequential):
         layer0 = nn.Sequential(OrderedDict([
             ('conv1'  , nn.Conv2d(3, self.in_features, kernel_size=7, stride=2, padding=3, bias=False)),
             ('bn1'    , nn.BatchNorm2d(self.in_features)),
-            ('relu1'   , nn.ReLU()),
+            ('relu1'   , nn.ReLU(inplace=True)),
             ('maxpool', nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
         ]))
         
