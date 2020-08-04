@@ -17,7 +17,7 @@ def draw_figure(plt,lines,labels=None, loc='best'):
 
 def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
         optimizer = None, scheduler = None,\
-        num_epochs = 10, print_freq = 1):
+        num_epochs = 10, print_freq = 1, model_path = None, best_acc = 0.):
     
     # Record list
     loss_list = []
@@ -92,9 +92,15 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
                 acc_train_list.append(epoch_acc)
             else:
                 acc_test_list.append(epoch_acc)
+                # Save the best model
+                if epoch_acc > best_acc and model_path is not None:
+                    best_acc = epoch_acc
+                    torch.save(model, model_path)
+                    print('epoch acc = ',epoch_acc,', best_acc = ',best_acc)
+                    print('Store model : ', model_path)
 
         loss_list.append(epoch_loss)
             
-    return loss_list, acc_train_list, acc_test_list
+    return loss_list, acc_train_list, acc_test_list, best_acc
 
 
