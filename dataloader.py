@@ -11,11 +11,18 @@ def getData(mode):
     if mode == 'train':
         img = pd.read_csv('train_img.csv')
         label = pd.read_csv('train_label.csv')
-        return np.squeeze(img.values), np.squeeze(label.values)
+        label = np.squeeze(label.values)
+        one_hot_label = np.zeros((label.size,5))
+        one_hot_label[np.arange(label.size),label] = 1
+        #print(one_hot_label)
+        return np.squeeze(img.values), one_hot_label
     else:
         img = pd.read_csv('test_img.csv')
         label = pd.read_csv('test_label.csv')
-        return np.squeeze(img.values), np.squeeze(label.values)
+        label = np.squeeze(label.values)
+        one_hot_label = np.zeros((label.size,5))
+        one_hot_label[np.arange(label.size),label] = 1
+        return np.squeeze(img.values), one_hot_label
 
 
 class RetinopathyLoader(data.Dataset):
