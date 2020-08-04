@@ -69,7 +69,6 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
                 running_loss += loss.item() * x.size(0)
                 running_corrects += torch.sum(preds == y.data)
                 
-                
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
             epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
