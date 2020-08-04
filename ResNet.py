@@ -139,7 +139,10 @@ class ResNet(nn.Sequential):
             ('avgpool', nn.AdaptiveAvgPool2d((1, 1))),
             ('flatten', nn.Flatten())
         ]))
-        fc = nn.Linear(512 * block_type.expansion , num_classes)
+        fc = nn.Sequential(OrderedDict([
+            ('fc1', nn.Linear(512 * block_type.expansion , 64 * block_type.expansion)),
+            ('fc2', nn.Linear(64 * block_type.expansion , num_classes))
+        ]))
     
         super(ResNet,self).__init__(OrderedDict([
             ('layer0' ,layer0),
