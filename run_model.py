@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def draw_figure(plt,lines,labels=None, loc='best'):    
     if labels is None:
@@ -36,6 +37,11 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
 
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:
+            
+            ################
+            pred_list = []
+            ################
+            
             if phase == 'train':
                 model.train()  # Set model to training mode
             else:
@@ -68,6 +74,7 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
                 # statistics
                 running_loss += loss.item() * x.size(0)
                 running_corrects += torch.sum(preds == y.data)
+                pred_list = pred_list + preds.tolist() 
                 
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
             epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
@@ -75,10 +82,11 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
             
             if epoch % print_freq == 0:
                 print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+                print('{} pred_list.value_counts() = \n{}'.format(phase, pd.Series(pred_list).value_counts()))
             
             # Step scheduler
-            if scheduler is not None:
-                scheduler.step(loss)
+            if phase == 'train' and scheduler is not None:
+                scheduler.step(epoch_loss)
 
             if phase == 'train':
                 acc_train_list.append(epoch_acc)
