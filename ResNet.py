@@ -27,6 +27,7 @@ class BasicBlock(nn.Module):
         self.bn2   = norm_layer(out_features)
         self.relu2 = nn.ReLU(inplace=True)
         
+        self.downsample = downsample
         self.identity = None
         
         
@@ -152,6 +153,7 @@ class ResNet(nn.Sequential):
         
     def _make_layer(self, block_type, out_features, num_blocks, stride=1):
         norm_layer = self._norm_layer
+        downsample = None
         previous_dilation = self.dilation
         
         if stride != 1 or self.in_features != out_features * block_type.expansion:
