@@ -54,6 +54,30 @@ def val(model, dataloader, criterion = nn.CrossEntropyLoss(),num_class = 5):
 def get_confusion_matrix(model, dataloader, criterion = nn.CrossEntropyLoss(),num_class = 5):
     return val(model, dataloader, criterion,num_class)
     
+    
+def plot_confusion_matrix (cm, title = 'Normalized confusion matrix', cmap=plt.cm.Blues,num_classes=5):
+    classes = range(num_classes)
+    # Normalized
+    for i in range(len(cm)):
+        cm[i] = cm[i]/cm[i].sum()
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.tight_layout()
+    plt.show()
 
 def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
         optimizer = None, scheduler = None,\
