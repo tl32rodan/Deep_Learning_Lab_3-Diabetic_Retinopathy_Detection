@@ -73,11 +73,11 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
 
                 # statistics
                 running_loss += loss.item() * x.size(0)
-                running_corrects += torch.sum(preds == y.data)
+                running_corrects += preds.eq(y.data).cpu().sum().item()
                 pred_list = pred_list + preds.tolist() 
                 
             epoch_loss = running_loss / len(dataloaders[phase].dataset)
-            epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
+            epoch_acc = running_corrects / len(dataloaders[phase].dataset)
 
             
             if epoch % print_freq == 0:
@@ -93,11 +93,12 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
             else:
                 acc_test_list.append(epoch_acc)
                 # Save the best model
-                if epoch_acc > best_acc and model_path is not None:
-                    best_acc = epoch_acc
-                    torch.save(model, model_path)
+                if epoch_acc > best_acc and model_path is not None:         
                     print('epoch acc = ',epoch_acc,', best_acc = ',best_acc)
+                    best_acc = epoch_acc
+
                     print('Store model : ', model_path)
+                    torch.save(model, model_path)
 
         loss_list.append(epoch_loss)
             
