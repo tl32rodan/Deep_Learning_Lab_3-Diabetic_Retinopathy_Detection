@@ -15,6 +15,54 @@ def draw_figure(plt,lines,labels=None, loc='best'):
         plt.legend(loc='best')
     plt.show()
     
+    
+def val(model, dataloader, criterion = nn.CrossEntropyLoss(), print_freq = 1, num_epochs = 10,model_path = None, best_acc = 0.):
+    
+    acc_test_list = []
+    
+    for epoch in range(1,num_epochs+1):
+        print('Epoch {}/{}'.format(epoch, num_epochs))
+        print('-' * 10)
+        
+        
+        model.eval() # Set model to evaluate mode
+        
+        running_loss = 0.0
+        running_corrects = 0
+            
+        # Iterate over data
+        for x, y in dataloader:
+            x = x.to(device)
+            y = y.to(device)
+       
+            with torch.no_grad():
+                outputs = model(x)
+                _, preds = torch.max(outputs, 1)
+
+                loss = criterion(outputs, y)
+            # statistics
+            running_loss += loss.item() * x.size(0)
+            running_corrects += torch.sum(preds == y.data)
+            pred_list = pred_list + preds.tolist() 
+                
+        epoch_loss = running_loss / len(dataloaders.dataset)
+        epoch_acc = running_corrects.double() / len(dataloader.dataset)
+        if epoch % print_freq == 0:
+            print('val Loss: {:.4f} Acc: {:.4f}'.format(, epoch_loss, epoch_acc))
+            print('val pred_list.value_counts() = \n{}'.format( pd.Series(pred_list).value_counts()))
+            
+        acc_test_list.append(epoch_acc)
+        # Save the best model
+        if epoch_acc > best_acc and model_path is not None:         
+            print('epoch acc = ',epoch_acc,', best_acc = ',best_acc)
+            best_acc = epoch_acc
+
+            print('Store model : ', model_path)
+            torch.save(model, model_path)
+
+            
+        
+    return acc_test_list, best_acc
 
 def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
         optimizer = None, scheduler = None,\
@@ -24,9 +72,7 @@ def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
     loss_list = []
     acc_train_list = []
     acc_test_list = []
-    
-    # Move data do gpu
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     
     # Setup optimizer
     if optimizer is None:
