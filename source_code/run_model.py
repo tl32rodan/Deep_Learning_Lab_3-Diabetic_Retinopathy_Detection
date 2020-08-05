@@ -14,6 +14,7 @@ def draw_figure(plt,lines,labels=None, loc='best'):
         
         plt.legend(loc='best')
     plt.show()
+    
 
 def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
         optimizer = None, scheduler = None,\

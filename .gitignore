@@ -131,6 +131,6 @@ dmypy.json
 *.pdf
 *.pptx
 *.zip
-data/**
-models/**
-result_list/**
+source_code/data/**
+source_code/models/**
+source_code/result_list/**
