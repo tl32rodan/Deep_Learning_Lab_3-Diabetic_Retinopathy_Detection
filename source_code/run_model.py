@@ -16,57 +16,51 @@ def draw_figure(plt,lines,labels=None, loc='best'):
     plt.show()
     
     
-def val(model, dataloader, criterion = nn.CrossEntropyLoss(), print_freq = 1, num_epochs = 10,model_path = None, best_acc = 0.):
-    
+def val(model, dataloader, criterion = nn.CrossEntropyLoss(),num_class = 5):
     acc_test_list = []
-    
-    for epoch in range(1,num_epochs+1):
-        print('Epoch {}/{}'.format(epoch, num_epochs))
-        print('-' * 10)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         
+    confusion_matrix = torch.zeros(num_class,num_class)
         
-        model.eval() # Set model to evaluate mode
+    model.eval() # Set model to evaluate mode
         
-        running_loss = 0.0
-        running_corrects = 0
+    running_loss = 0.0
+    running_corrects = 0
             
-        # Iterate over data
-        for x, y in dataloader:
-            x = x.to(device)
-            y = y.to(device)
+    # Iterate over data
+    for x, y in dataloader:
+        x = x.to(device)
+        y = y.to(device)
        
-            with torch.no_grad():
-                outputs = model(x)
-                _, preds = torch.max(outputs, 1)
+        with torch.no_grad():
+            outputs = model(x)
+            _, preds = torch.max(outputs, 1)
 
-                loss = criterion(outputs, y)
-            # statistics
-            running_loss += loss.item() * x.size(0)
-            running_corrects += torch.sum(preds == y.data)
-            pred_list = pred_list + preds.tolist() 
+            loss = criterion(outputs, y)
                 
-        epoch_loss = running_loss / len(dataloaders.dataset)
-        epoch_acc = running_corrects.double() / len(dataloader.dataset)
-        if epoch % print_freq == 0:
-            print('val Loss: {:.4f} Acc: {:.4f}'.format(, epoch_loss, epoch_acc))
-            print('val pred_list.value_counts() = \n{}'.format( pd.Series(pred_list).value_counts()))
-            
-        acc_test_list.append(epoch_acc)
-        # Save the best model
-        if epoch_acc > best_acc and model_path is not None:         
-            print('epoch acc = ',epoch_acc,', best_acc = ',best_acc)
-            best_acc = epoch_acc
-
-            print('Store model : ', model_path)
-            torch.save(model, model_path)
-
-            
+            for t, p in zip(y.view(-1), preds.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
+                 
+        # statistics
+        running_loss += loss.item() * x.size(0)
+        running_corrects += torch.sum(preds == y.data)
+                
+    running_loss = running_loss / len(dataloader.dataset)
+    running_corrects = running_corrects.double() / len(dataloader.dataset)
+    print('val Loss: {:.4f} Acc: {:.4f}'.format( running_loss, running_corrects))
         
-    return acc_test_list, best_acc
+    return confusion_matrix
+
+def get_confusion_matrix(model, dataloader, criterion = nn.CrossEntropyLoss(),num_class = 5):
+    return val(model, dataloader, criterion,num_class)
+    
 
 def run(model, dataloaders, criterion = nn.CrossEntropyLoss(),\
         optimizer = None, scheduler = None,\
         num_epochs = 10, print_freq = 1, model_path = None, best_acc = 0.):
+    
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
     
     # Record list
     loss_list = []
